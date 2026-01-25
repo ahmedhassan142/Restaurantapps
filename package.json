@@ -9,12 +9,7 @@
     "lint": "eslint",
     "seed": "tsx scripts/seedmenudata.ts"
   },
-  "eslintConfig": {
-    "extends": [
-      "next/core-web-vitals"
-    ],
-    "ignoreDuringBuilds": true
-  },
+ 
   "dependencies": {
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
