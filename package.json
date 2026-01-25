@@ -9,8 +9,10 @@
     "lint": "eslint",
     "seed": "tsx scripts/seedmenudata.ts"
   },
-   "eslintConfig": {
-    "extends": ["next/core-web-vitals"],
+  "eslintConfig": {
+    "extends": [
+      "next/core-web-vitals"
+    ],
     "ignoreDuringBuilds": true
   },
   "dependencies": {
@@ -24,7 +26,8 @@
     "next": "16.0.1",
     "nodemailer": "^7.0.12",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "react-hot-toast": "^2.6.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
