@@ -1,9 +1,9 @@
 // app/api/user/payment/route.ts - FIXED VERSION
 import { NextRequest, NextResponse } from 'next/server';
 import mongoose from 'mongoose';
-import connectDB from '@/lib/mongodb';
-import Payment, { PaymentPlatform } from '@/models/Payment';
-import { verifyToken } from '@/lib/auth';
+import connectDB from '../../../../lib/mongodb';
+import Payment, { PaymentPlatform } from '../../../../models/Payment';
+import { verifyToken } from '../../../../lib/auth';
 
 // GET: Get user's payment methods and platforms
 export async function GET(request: NextRequest) {

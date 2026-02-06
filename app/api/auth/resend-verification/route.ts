@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     // Find user
-    const user = await User.findById(decoded.id);
+    const user = await User.findById(decoded.userId);
     
     if (!user) {
       return NextResponse.json(

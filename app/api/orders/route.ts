@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '../../../lib/mongodb';
 import Order, { IOrder } from '../../../models/order';
 import MenuItem from '../../../models/menu';
-import mongoose from 'mongoose';
-import { sendOrderConfirmationEmail } from '@/lib/email';
+
+import { sendOrderConfirmationEmail } from '../../../lib/email';
 
 
 // GET - Fetch orders (with filters for customers or admin)

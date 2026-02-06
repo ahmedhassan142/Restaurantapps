@@ -1,7 +1,7 @@
 // app/api/orders/by-number/[orderNumber]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Order from '@/models/order';
+import connectDB from '../../../../../lib/mongodb';
+import Order from '../../../../../models/order';
 
 export async function GET(
   request: NextRequest,

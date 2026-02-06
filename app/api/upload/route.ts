@@ -1,6 +1,6 @@
 // app/api/upload/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import cloudinary from '@/lib/cloudinaryconfig';
+import cloudinary from '../../../lib/cloudinaryconfig';
 
 export async function POST(request: NextRequest) {
   try {

@@ -1,8 +1,8 @@
 // app/api/user/profile/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import User from '@/models/User';
-import { verifyToken } from '@/lib/auth';
+import connectDB from '../../../../lib/mongodb';
+import User from '../../../../models/User';
+import { verifyToken } from '../../../../lib/auth';
 
 export async function PUT(request: NextRequest) {
   try {

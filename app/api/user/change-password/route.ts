@@ -1,8 +1,8 @@
 // app/api/user/change-password/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import User from '@/models/User';
-import { verifyToken } from '@/lib/auth';
+import connectDB from '../../../../lib/mongodb';
+import User from '../../../../models/User';
+import { verifyToken } from '../../../../lib/auth';
 import bcrypt from 'bcryptjs';
 
 export async function PUT(request: NextRequest) {

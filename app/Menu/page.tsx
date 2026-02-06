@@ -11,7 +11,7 @@ import {
   ChevronDown, Check
 } from 'lucide-react';
 import { useCart } from '../context/cart';
-import { MenuItem } from '@/types';
+import { MenuItem } from '../../types';
 
 interface Category {
   _id: string;

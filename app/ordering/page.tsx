@@ -8,7 +8,7 @@ import {
   Shield, Lock, ArrowLeft, CheckCircle, Clock, ChefHat ,Plus
 } from 'lucide-react';
 import { useCart } from '../context/cart';
-import { CartItem } from '@/types';
+import { CartItem } from '../../types';
 
 type DeliveryType = 'pickup' | 'delivery';
 type CheckoutStep = 'customer' | 'delivery' | 'payment' | 'confirmation';

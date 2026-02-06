@@ -374,7 +374,10 @@ export default function AdminDashboard() {
           </div>
           <div className="space-y-4">
             
-            {stats?.popularItems?.length > 0 ? (
+            {
+            //@ts-ignore
+            stats?.popularItems?.length > 0 ? (
+              //@ts-ignore
               stats.popularItems.map((item, index) => (
                 <div 
                   key={item._id || index} 
@@ -417,7 +420,10 @@ export default function AdminDashboard() {
             <Clock className="w-5 h-5 text-gray-400" />
           </div>
           <div className="space-y-4">
-            {stats?.recentReservations?.length > 0 ? (
+            {
+            //@ts-ignore
+             stats?.recentReservations?.length > 0 ? (
+               //@ts-ignore
               stats.recentReservations.map((reservation, index) => (
                 <div 
                   key={reservation._id || index} 

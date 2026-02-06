@@ -1,8 +1,8 @@
 // app/api/orders/user/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Order from '@/models/order';
-import { verifyToken } from '@/lib/auth';
+import connectDB from '../../../../lib/mongodb';
+import Order from '../../../../models/order';
+import { verifyToken } from '../../../../lib/auth';
 
 export async function GET(request: NextRequest) {
   try {

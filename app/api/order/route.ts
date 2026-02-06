@@ -1,8 +1,8 @@
 // app/api/orders/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Order from '@/models/order';
-import MenuItem from '@/models/menu';
+import connectDB from '../../../lib/mongodb';
+import Order from '../../../models/order';
+import MenuItem from '../../../models/menu';
 
 export async function POST(request: NextRequest) {
   try {
