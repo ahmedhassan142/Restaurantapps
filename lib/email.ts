@@ -35,7 +35,7 @@ export interface OrderConfirmationEmailProps {
 const SMTP_USER = "ah770643@gmail.com";
 const SMTP_PASS = "tzhixkiirkcpahrq";
 const EMAIL_FROM_NAME = "Epicurean Restaurant";
-const NEXTAUTH_URL = process.env.NEXTAUTH_URL || "http://localhost:3000";
+const NEXTAUTH_URL = process.env.NEXTAUTH_URL || "https://restaurantapps-git-main-ahmed-hassans-projects-96c42d63.vercel.app";
 const createTransporter = () => {
   return nodemailer.createTransport({
     service: "gmail",

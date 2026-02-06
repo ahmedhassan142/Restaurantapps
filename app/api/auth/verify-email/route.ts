@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Set auth cookie
-    const { generateToken } = await import('@/lib/auth');
+    const { generateToken } = await import('../../../../lib/auth');
     const authToken = generateToken({
       userId:user._id.toString(),
       email: user.email,
