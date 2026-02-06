@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminSidebar from '../Components/AdminSidebar';
+import Header from '../Components/Header'
 
 interface User {
   id: string;
@@ -83,9 +84,12 @@ export default function AdminLayout({
 
   return (
     <div className="min-h-screen bg-gray-50">
+      
       <AdminSidebar user={user} onLogout={handleLogout} />
+      
       <div className="lg:ml-64">
         <div className="p-8">
+         
           {children}
         </div>
       </div>

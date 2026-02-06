@@ -145,8 +145,8 @@ const Header = () => {
   // Don't show header on login/signup pages or admin pages
   if (pathname === '/login' || 
       pathname === '/signup' || 
-      pathname === '/verify-email' ||
-      pathname.startsWith('/admin/')) {
+      pathname === '/verify-email'
+      ) {
     return null;
   }
 
