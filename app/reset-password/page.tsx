@@ -1,13 +1,14 @@
-// app/reset-password/page.tsx
+// app/reset-password/page.tsx - UPDATED WITH SUSPENSE
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, Lock, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
 
-export default function ResetPasswordPage() {
+// Create a separate component that uses useSearchParams
+function ResetPasswordContent() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -30,6 +31,7 @@ export default function ResetPasswordPage() {
     if (!token) {
       setTokenValid(false);
       setTokenLoading(false);
+      setError('Reset token is missing from the URL');
       return;
     }
 
@@ -45,7 +47,7 @@ export default function ResetPasswordPage() {
       }
     } catch (err) {
       setTokenValid(false);
-      setError('Failed to validate reset token');
+      setError('Failed to validate reset token. Please try again.');
     } finally {
       setTokenLoading(false);
     }
@@ -105,6 +107,7 @@ export default function ResetPasswordPage() {
     }
   };
 
+  // Loading state
   if (tokenLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
@@ -116,6 +119,7 @@ export default function ResetPasswordPage() {
     );
   }
 
+  // Invalid token state
   if (!tokenValid) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -156,6 +160,7 @@ export default function ResetPasswordPage() {
     );
   }
 
+  // Main form
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <Toaster 
@@ -334,5 +339,26 @@ export default function ResetPasswordPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Loading component for Suspense
+function ResetPasswordLoading() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
+        <p className="mt-4 text-gray-600">Loading reset password page...</p>
+      </div>
+    </div>
+  );
+}
+
+// Main page component with Suspense boundary
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<ResetPasswordLoading />}>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }
