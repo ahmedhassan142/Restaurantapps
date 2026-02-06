@@ -12,8 +12,11 @@ export interface IUser extends Document {
   isEmailVerified: boolean;
   emailVerificationToken?: string;
   emailVerificationExpires?: Date;
-  passwordResetToken?: string;
-  passwordResetExpires?: Date;
+ resetPasswordToken: String;
+  
+  
+  resetPasswordExpires: Date;
+  
   phone?: string;
   address?: {
     street: string;
@@ -66,8 +69,15 @@ const UserSchema: Schema = new Schema({
   },
   emailVerificationToken: String,
   emailVerificationExpires: Date,
-  passwordResetToken: String,
-  passwordResetExpires: Date,
+  resetPasswordToken: {
+    type: String,
+    default: undefined
+  },
+  
+  resetPasswordExpires: {
+    type: Date,
+    default: undefined
+  },
   phone: {
     type: String,
     trim: true,

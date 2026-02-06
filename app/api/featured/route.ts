@@ -1,13 +1,22 @@
 // app/api/featured/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import mongoose from 'mongoose'; // Import mongoose
 import connectDB from '../../../lib/mongodb';
 import Featureditem from '../../../models/Featureditem';
 import MenuItem from '../../../models/menu';
+import Category from '../../../models/category';
 import { verifyToken } from '../../../lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
+    
+    // Make sure Category model is registered
+    // This line ensures the Category model is registered before using it
+    if (!mongoose.models.Category) {
+      // Get Category schema from imported model
+      const CategoryModel = mongoose.model('Category', Category.schema);
+    }
 
     const { searchParams } = new URL(request.url);
     const includeInactive = searchParams.get('includeInactive') === 'true';
@@ -20,14 +29,20 @@ export async function GET(request: NextRequest) {
     if (!admin || !includeInactive) {
       const now = new Date();
       query.isActive = true;
-      query.$or = [
-        { startDate: { $exists: false } },
-        { startDate: { $lte: now } }
+      query.$and = [
+        {
+          $or: [
+            { startDate: { $exists: false } },
+            { startDate: { $lte: now } }
+          ]
+        },
+        {
+          $or: [
+            { endDate: { $exists: false } },
+            { endDate: { $gte: now } }
+          ]
+        }
       ];
-      query.$or.push(
-        { endDate: { $exists: false } },
-        { endDate: { $gte: now } }
-      );
     }
 
     // Build the query
@@ -37,6 +52,7 @@ export async function GET(request: NextRequest) {
         select: 'name price category isAvailable image description',
         populate: {
           path: 'category',
+          model: 'Category',
           select: 'name slug'
         }
       })
@@ -54,11 +70,13 @@ export async function GET(request: NextRequest) {
       const menuItem = item.menuItem as any;
       let categoryName = 'Unknown';
       let categoryId = '';
+      let categorySlug = '';
       
       if (menuItem && menuItem.category) {
         if (typeof menuItem.category === 'object') {
           categoryName = menuItem.category.name || 'Unknown';
           categoryId = menuItem.category._id || '';
+          categorySlug = menuItem.category.slug || '';
         } else {
           categoryName = menuItem.category;
           categoryId = menuItem.category;
@@ -73,6 +91,7 @@ export async function GET(request: NextRequest) {
           price: menuItem?.price || 0,
           category: categoryName,
           categoryId: categoryId,
+          categorySlug: categorySlug,
           isAvailable: menuItem?.isAvailable || false,
           image: menuItem?.image || '',
           description: menuItem?.description || ''
@@ -179,12 +198,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if this menu item is already featured (active)
+    const now = new Date();
     const existingFeatured = await Featureditem.findOne({
       menuItem: body.menuItem,
       isActive: true,
-      $or: [
-        { endDate: { $exists: false } },
-        { endDate: { $gte: new Date() } }
+      $and: [
+        {
+          $or: [
+            { startDate: { $exists: false } },
+            { startDate: { $lte: now } }
+          ]
+        },
+        {
+          $or: [
+            { endDate: { $exists: false } },
+            { endDate: { $gte: now } }
+          ]
+        }
       ]
     });
 
@@ -241,6 +271,7 @@ export async function POST(request: NextRequest) {
       select: 'name price category isAvailable image description',
       populate: {
         path: 'category',
+        model: 'Category',
         select: 'name slug'
       }
     });

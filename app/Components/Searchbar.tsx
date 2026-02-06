@@ -60,9 +60,9 @@ export default function SearchBar() {
 
   const handleResultClick = (result: SearchResult) => {
     if (result.type === 'menu') {
-      router.push(`/menu?highlight=${result._id}`);
+      router.push(`/Menu/${result._id}`);
     } else {
-      router.push(`/menu?category=${result.category}`);
+      router.push(`/Menu`);
     }
     setIsOpen(false);
     setQuery('');

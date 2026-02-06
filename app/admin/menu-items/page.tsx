@@ -1,8 +1,12 @@
-// app/admin/menu-items/page.tsx
+// app/admin/menu-items/page.tsx - UPDATED WITH IMAGE UPLOAD
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Search, Filter, Eye, EyeOff, Loader2, Utensils } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { 
+  Plus, Edit, Trash2, Search, Filter, Eye, EyeOff, 
+  Loader2, Utensils, Upload, X, Image as ImageIcon 
+} from 'lucide-react';
+import Image from 'next/image';
 
 interface MenuItem {
   _id: string;
@@ -10,6 +14,7 @@ interface MenuItem {
   description: string;
   price: number;
   category: string;
+  image: string;
   isAvailable: boolean;
   isVegetarian: boolean;
   isVegan: boolean;
@@ -37,12 +42,15 @@ export default function MenuItemsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [availabilityFilter, setAvailabilityFilter] = useState('all');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     price: 0,
     category: '',
+    image: '/images/default-food.jpg',
     isAvailable: true,
     isVegetarian: false,
     isVegan: false,
@@ -52,6 +60,9 @@ export default function MenuItemsPage() {
     ingredients: ['']
   });
 
+  const [formImage, setFormImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -59,36 +70,24 @@ export default function MenuItemsPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      console.log('Fetching menu items and categories...');
       
       const [itemsRes, categoriesRes] = await Promise.all([
         fetch('/api/menu?includeInactive=true'),
         fetch('/api/categories')
       ]);
 
-      console.log('Menu items response:', itemsRes.status);
-      console.log('Categories response:', categoriesRes.status);
-
       if (itemsRes.ok) {
         const itemsData = await itemsRes.json();
-        console.log('Menu items data:', itemsData);
         setMenuItems(itemsData.menuItems || []);
-      } else {
-        console.error('Failed to fetch menu items');
-        alert('Failed to load menu items');
       }
 
       if (categoriesRes.ok) {
         const categoriesData = await categoriesRes.json();
-        console.log('Categories data:', categoriesData);
         setCategories(categoriesData.categories || []);
-      } else {
-        console.error('Failed to fetch categories');
-        alert('Failed to load categories');
       }
     } catch (error) {
       console.error('Error fetching data:', error);
-      alert('Error loading data. Check console for details.');
+      alert('Error loading data.');
     } finally {
       setLoading(false);
     }
@@ -117,6 +116,58 @@ export default function MenuItemsPage() {
     
     return matchesSearch && matchesCategory && matchesAvailability;
   });
+
+  const handleImageUpload = async (file: File) => {
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setFormData(prev => ({ ...prev, image: data.imageUrl }));
+        setImagePreview(data.imageUrl);
+        return data.imageUrl;
+      } else {
+        throw new Error(data.error || 'Failed to upload image');
+      }
+    } catch (error) {
+      console.error('Image upload error:', error);
+      alert('Failed to upload image. Please try again.');
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Preview image
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    setFormImage(file);
+  };
+
+  const removeImage = () => {
+    setFormImage(null);
+    setImagePreview('');
+    setFormData(prev => ({ ...prev, image: '/images/default-food.jpg' }));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,6 +201,16 @@ export default function MenuItemsPage() {
     setSubmitting(true);
     
     try {
+      let finalImageUrl = formData.image;
+      
+      // Upload new image if selected
+      if (formImage) {
+        const uploadedUrl = await handleImageUpload(formImage);
+        if (uploadedUrl) {
+          finalImageUrl = uploadedUrl;
+        }
+      }
+      
       const url = editingItem 
         ? `/api/menu/${editingItem._id}`
         : '/api/menu';
@@ -158,7 +219,11 @@ export default function MenuItemsPage() {
       
       const ingredients = formData.ingredients.filter(ing => ing.trim() !== '');
       
-      const payload = { ...formData, ingredients };
+      const payload = { 
+        ...formData, 
+        image: finalImageUrl,
+        ingredients 
+      };
       
       console.log('Submitting menu item:', { url, method, payload });
 
@@ -168,11 +233,8 @@ export default function MenuItemsPage() {
         body: JSON.stringify(payload)
       });
 
-      console.log('Submit response:', response.status);
-
       if (response.ok) {
         const result = await response.json();
-        console.log('Submit success:', result);
         
         // Close form and reset
         setShowForm(false);
@@ -182,6 +244,7 @@ export default function MenuItemsPage() {
           description: '',
           price: 0,
           category: '',
+          image: '/images/default-food.jpg',
           isAvailable: true,
           isVegetarian: false,
           isVegan: false,
@@ -190,6 +253,8 @@ export default function MenuItemsPage() {
           preparationTime: 20,
           ingredients: ['']
         });
+        setFormImage(null);
+        setImagePreview('');
         
         // Refresh data
         await fetchData();
@@ -197,25 +262,24 @@ export default function MenuItemsPage() {
         alert(editingItem ? 'Menu item updated successfully!' : 'Menu item created successfully!');
       } else {
         const errorData = await response.json().catch(() => ({}));
-        console.error('Submit failed:', errorData);
         alert(errorData.error || errorData.message || 'Failed to save menu item');
       }
     } catch (error) {
       console.error('Error saving menu item:', error);
-      alert('An error occurred while saving. Check console for details.');
+      alert('An error occurred while saving.');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleEdit = (item: MenuItem) => {
-    console.log('Editing menu item:', item);
     setEditingItem(item);
     setFormData({
       name: item.name,
       description: item.description,
       price: item.price,
       category: item.category,
+      image: item.image,
       isAvailable: item.isAvailable,
       isVegetarian: item.isVegetarian,
       isVegan: item.isVegan,
@@ -224,6 +288,7 @@ export default function MenuItemsPage() {
       preparationTime: item.preparationTime,
       ingredients: item.ingredients.length > 0 ? item.ingredients : ['']
     });
+    setImagePreview(item.image);
     setShowForm(true);
   };
 
@@ -233,24 +298,20 @@ export default function MenuItemsPage() {
     setDeleting(itemId);
     
     try {
-      console.log('Deleting menu item:', itemId);
       const response = await fetch(`/api/menu/${itemId}`, {
         method: 'DELETE'
       });
-
-      console.log('Delete response:', response.status);
 
       if (response.ok) {
         await fetchData();
         alert('Menu item deleted successfully!');
       } else {
         const errorData = await response.json().catch(() => ({}));
-        console.error('Delete failed:', errorData);
         alert(errorData.error || errorData.message || 'Failed to delete menu item');
       }
     } catch (error) {
       console.error('Error deleting menu item:', error);
-      alert('An error occurred while deleting. Check console for details.');
+      alert('An error occurred while deleting.');
     } finally {
       setDeleting(null);
     }
@@ -260,26 +321,22 @@ export default function MenuItemsPage() {
     setToggling(itemId);
     
     try {
-      console.log('Toggling availability:', { itemId, currentStatus });
       const response = await fetch(`/api/menu/${itemId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isAvailable: !currentStatus })
       });
 
-      console.log('Toggle response:', response.status);
-
       if (response.ok) {
         await fetchData();
         alert(`Menu item ${!currentStatus ? 'activated' : 'deactivated'} successfully!`);
       } else {
         const errorData = await response.json().catch(() => ({}));
-        console.error('Toggle failed:', errorData);
         alert('Failed to update menu item status');
       }
     } catch (error) {
       console.error('Error updating availability:', error);
-      alert('An error occurred while updating. Check console for details.');
+      alert('An error occurred while updating.');
     } finally {
       setToggling(null);
     }
@@ -306,6 +363,13 @@ export default function MenuItemsPage() {
     }));
   };
 
+  // Add to your .env.local file:
+  /*
+  CLOUDINARY_CLOUD_NAME=your_cloud_name
+  CLOUDINARY_API_KEY=your_api_key
+  CLOUDINARY_API_SECRET=your_api_secret
+  */
+
   if (loading) {
     return (
       <div className="p-8">
@@ -331,13 +395,13 @@ export default function MenuItemsPage() {
         </div>
         <button
           onClick={() => {
-            console.log('Opening add menu item form');
             setEditingItem(null);
             setFormData({
               name: '',
               description: '',
               price: 0,
               category: '',
+              image: '/images/default-food.jpg',
               isAvailable: true,
               isVegetarian: false,
               isVegan: false,
@@ -346,6 +410,8 @@ export default function MenuItemsPage() {
               preparationTime: 20,
               ingredients: ['']
             });
+            setFormImage(null);
+            setImagePreview('');
             setShowForm(true);
           }}
           className="bg-orange-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-orange-700 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -415,94 +481,112 @@ export default function MenuItemsPage() {
         <div className="divide-y divide-gray-100">
           {filteredItems.map((item) => (
             <div key={item._id} className="p-6 hover:bg-gray-50 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
-                    <div className="flex items-center space-x-2">
-                      {item.isVegetarian && (
-                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
-                          Vegetarian
-                        </span>
-                      )}
-                      {item.isVegan && (
-                        <span className="bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full text-xs font-medium">
-                          Vegan
-                        </span>
-                      )}
-                      {item.isGlutenFree && (
-                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
-                          Gluten Free
-                        </span>
-                      )}
-                      {item.isSpicy && (
-                        <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
-                          Spicy
-                        </span>
-                      )}
-                    </div>
+              <div className="flex items-start space-x-4">
+                {/* Image */}
+                <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                  <div className="relative w-full h-full">
+                    <Image
+                      src={item.image}
+                      alt={item.name}
+                      fill
+                      className="object-cover"
+                      sizes="96px"
+                      unoptimized={!item.image.startsWith('/')}
+                    />
                   </div>
-                  
-                  <p className="text-gray-600 mb-2">{item.description}</p>
-                  
-                  <div className="flex items-center space-x-4 text-sm text-gray-500">
-                    <span>${item.price.toFixed(2)}</span>
-                    <span>•</span>
-                    <span>{item.preparationTime} min prep</span>
-                    <span>•</span>
-                    <span className={`font-medium ${
-                      item.isAvailable ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {item.isAvailable ? 'Available' : 'Unavailable'}
-                    </span>
-                  </div>
-                  
-                  {item.ingredients.length > 0 && (
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-500">Ingredients: {item.ingredients.join(', ')}</p>
-                    </div>
-                  )}
                 </div>
                 
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => toggleAvailability(item._id, item.isAvailable)}
-                    disabled={toggling === item._id}
-                    className={`p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                      item.isAvailable 
-                        ? 'text-green-600 hover:bg-green-50' 
-                        : 'text-red-600 hover:bg-red-50'
-                    }`}
-                    title={item.isAvailable ? 'Make Unavailable' : 'Make Available'}
-                  >
-                    {toggling === item._id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : item.isAvailable ? (
-                      <Eye className="w-4 h-4" />
-                    ) : (
-                      <EyeOff className="w-4 h-4" />
-                    )}
-                  </button>
-                  
-                  <button
-                    onClick={() => handleEdit(item)}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={deleting === item._id || toggling === item._id}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  
-                  <button
-                    onClick={() => handleDelete(item._id)}
-                    disabled={deleting === item._id || toggling === item._id}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {deleting === item._id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="w-4 h-4" />
-                    )}
-                  </button>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center space-x-3 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
+                        <div className="flex items-center space-x-2">
+                          {item.isVegetarian && (
+                            <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                              Vegetarian
+                            </span>
+                          )}
+                          {item.isVegan && (
+                            <span className="bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full text-xs font-medium">
+                              Vegan
+                            </span>
+                          )}
+                          {item.isGlutenFree && (
+                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                              Gluten Free
+                            </span>
+                          )}
+                          {item.isSpicy && (
+                            <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
+                              Spicy
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <p className="text-gray-600 mb-2">{item.description}</p>
+                      
+                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                        <span>${item.price.toFixed(2)}</span>
+                        <span>•</span>
+                        <span>{item.preparationTime} min prep</span>
+                        <span>•</span>
+                        <span className={`font-medium ${
+                          item.isAvailable ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {item.isAvailable ? 'Available' : 'Unavailable'}
+                        </span>
+                      </div>
+                      
+                      {item.ingredients.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-sm text-gray-500">Ingredients: {item.ingredients.join(', ')}</p>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => toggleAvailability(item._id, item.isAvailable)}
+                        disabled={toggling === item._id}
+                        className={`p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                          item.isAvailable 
+                            ? 'text-green-600 hover:bg-green-50' 
+                            : 'text-red-600 hover:bg-red-50'
+                        }`}
+                        title={item.isAvailable ? 'Make Unavailable' : 'Make Available'}
+                      >
+                        {toggling === item._id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : item.isAvailable ? (
+                          <Eye className="w-4 h-4" />
+                        ) : (
+                          <EyeOff className="w-4 h-4" />
+                        )}
+                      </button>
+                      
+                      <button
+                        onClick={() => handleEdit(item)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={deleting === item._id || toggling === item._id}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      
+                      <button
+                        onClick={() => handleDelete(item._id)}
+                        disabled={deleting === item._id || toggling === item._id}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {deleting === item._id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -528,6 +612,62 @@ export default function MenuItemsPage() {
             </div>
             
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              {/* Image Upload Section */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Item Image
+                </label>
+                <div className="space-y-4">
+                  {(imagePreview || formData.image) && (
+                    <div className="relative w-40 h-40 rounded-lg overflow-hidden border border-gray-300">
+                      <Image
+                        src={imagePreview || formData.image}
+                        alt="Preview"
+                        fill
+                        className="object-cover"
+                        sizes="160px"
+                      />
+                      <button
+                        type="button"
+                        onClick={removeImage}
+                        className="absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center space-x-4">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingImage || submitting}
+                      className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                    >
+                      {uploadingImage ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Upload className="w-4 h-4" />
+                      )}
+                      <span>{uploadingImage ? 'Uploading...' : 'Upload Image'}</span>
+                    </button>
+                    
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                      disabled={uploadingImage || submitting}
+                    />
+                    
+                    <p className="text-sm text-gray-500">
+                      JPG, PNG, WebP, GIF • Max 5MB
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">

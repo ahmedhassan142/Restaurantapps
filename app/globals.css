@@ -64,3 +64,18 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #c2410c;
 }
+/* Fix for Leaflet half-map issue */
+.leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.leaflet-pane {
+  z-index: 1 !important;
+}
+
+.leaflet-top, .leaflet-bottom {
+  z-index: 1000 !important;
+}

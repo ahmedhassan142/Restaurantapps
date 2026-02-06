@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '../../../lib/mongodb';
 import MenuItem from '../../../models/menu';
 import Category from '../../../models/category';
-import FeaturedItem from '@/models/Featureditem';
+
 import { verifyToken } from '../../../lib/auth';
 
 export async function GET(request: NextRequest) {
@@ -69,9 +69,10 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+// app/api/menu/route.ts - Update POST method
 export async function POST(request: NextRequest) {
   try {
-    // Get token from cookies for authentication
+    // Authentication check (same as before)
     const cookieHeader = request.headers.get('cookie') || '';
     const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
       const [key, value] = cookie.trim().split('=');
@@ -91,7 +92,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify token
     const decoded = verifyToken(token);
     
     if (!decoded || (decoded.role !== 'admin' && decoded.role !== 'manager')) {
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Prepare menu item data
+    // Prepare menu item data with image
     const menuItemData = {
       name: body.name.trim(),
       description: body.description.trim(),

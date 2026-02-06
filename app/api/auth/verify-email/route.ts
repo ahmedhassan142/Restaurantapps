@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '../../../../lib/mongodb';
 import User from '../../../../models/User';
 import crypto from 'crypto';
-import { sendWelcomeEmail } from '@/lib/email';
+import { sendWelcomeEmail } from '../../../../lib/email';
 
 export async function GET(request: NextRequest) {
   try {
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     // Set auth cookie
     const { generateToken } = await import('@/lib/auth');
     const authToken = generateToken({
-      id: user._id.toString(),
+      userId:user._id.toString(),
       email: user.email,
       name: user.name,
       role: user.role
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
     // Set auth cookie
     response.cookies.set('auth-token', authToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+    
       sameSite: 'strict',
       maxAge: 30 * 24 * 60 * 60, // 30 days
       path: '/',

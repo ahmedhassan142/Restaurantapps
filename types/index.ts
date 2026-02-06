@@ -44,3 +44,10 @@ export interface ContactForm {
 export interface NewsletterSubscription {
   email: string;
 }
+// types/index.ts
+
+export interface CartItem {
+  menuItem: MenuItem;
+  quantity: number;
+  specialInstructions?: string;
+}

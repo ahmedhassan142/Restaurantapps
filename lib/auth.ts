@@ -6,7 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-producti
 const JWT_EXPIRES_IN = '30d';
 
 export interface UserPayload {
-  id: string;
+  userId: string;
   email: string;
   name: string;
   role: string;

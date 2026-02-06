@@ -42,44 +42,55 @@ export default function LoginPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+// app/login/page.tsx - UPDATE THE SUCCESS HANDLER
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+  setError('');
 
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-        credentials: 'include',
-      });
+  try {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+      credentials: 'include',
+    });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
-      }
-
-      toast.success('Login successful! Redirecting...');
-      
-      // Redirect based on role
-      setTimeout(() => {
-        if (data.user.role === 'admin') {
-          window.location.href = '/admin/dashboard';
-        } else {
-          window.location.href = '/';
-        }
-      }, 1500);
-
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setLoading(false);
+    if (!response.ok) {
+      throw new Error(data.error || 'Login failed');
     }
-  };
+
+    toast.success('Login successful! Redirecting...');
+    
+    // Store user ID for cart isolation
+    localStorage.setItem('current_user_id', data.user.id);
+    
+    // Migrate guest cart to user cart (if using cart context)
+    if (typeof window !== 'undefined') {
+      // This will be handled by CartContext on next render
+      // But we can also trigger it here
+      window.dispatchEvent(new Event('storage'));
+    }
+    
+    // Redirect based on role
+    setTimeout(() => {
+      if (data.user.role === 'admin') {
+        window.location.href = '/admin/dashboard';
+      } else {
+        window.location.href = '/';
+      }
+    }, 1500);
+
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+    setError(errorMessage);
+    toast.error(errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
 
   if (isCheckingAuth) {
     return (

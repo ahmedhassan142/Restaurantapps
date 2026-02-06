@@ -121,7 +121,7 @@ export default function Home() {
                 {/* Replace this Image component with your actual photo */}
                 <div className="w-full h-96 lg:h-[500px] relative">
                   <Image
-                    src="/hero-image.jpg" // Replace with your image path
+                    src="/images/hero-image.jpg" // Replace with your image path
                     alt="Exquisite dining experience at our restaurant"
                     fill
                     className="object-cover"

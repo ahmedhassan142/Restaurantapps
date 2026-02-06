@@ -149,79 +149,6 @@ export const sendVerificationEmail = async (email: string, name: string, token: 
     `,
   });
 };
-export const sendPasswordResetEmail = async (email: string, name: string, token: string): Promise<void> => {
-  const resetUrl = `${NEXTAUTH_URL}/auth/reset-password?token=${token}`;
-  
-  console.log(`📧 Sending password reset email to ${email}`);
-  console.log(`🔗 Reset URL: ${resetUrl}`);
-  console.log(`🕐 Token expires in: 1 hour`);
-  
-  await sendEmail({
-    email,
-    subject: 'Reset your password - Your App',
-    text: `Hello ${name},\n\nWe received a request to reset your password. Click this link to reset:\n${resetUrl}\n\nThis link will expire in 1 hour.\n\nIf you didn't request this, you can safely ignore this email.`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-        <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="color: #3b82f6; margin: 0;">Your App</h1>
-          <p style="color: #666; margin-top: 5px;">Password Reset Request</p>
-        </div>
-        
-        <h2 style="color: #333; margin-bottom: 20px;">Hello ${name},</h2>
-        
-        <p style="color: #555; line-height: 1.6; margin-bottom: 25px;">
-          We received a request to reset the password for your <strong>Your App</strong> account. 
-          If you made this request, click the button below to choose a new password:
-        </p>
-        
-        <div style="text-align: center; margin: 40px 0;">
-          <a href="${resetUrl}" 
-             style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); 
-                    color: white; 
-                    padding: 15px 35px; 
-                    text-decoration: none; 
-                    border-radius: 8px; 
-                    font-weight: bold; 
-                    font-size: 16px;
-                    display: inline-block;
-                    box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
-                    transition: all 0.3s ease;">
-            Reset Password
-          </a>
-        </div>
-        
-        <p style="color: #777; font-size: 14px; margin-bottom: 10px;">
-          Or copy and paste this link into your browser:
-        </p>
-        
-        <div style="background: #fef2f2; padding: 12px; border-radius: 6px; margin-bottom: 25px; border-left: 4px solid #ef4444;">
-          <code style="color: #991b1b; word-break: break-all; font-size: 13px;">
-            ${resetUrl}
-          </code>
-        </div>
-        
-        <div style="background: #f0f9ff; padding: 15px; border-radius: 6px; margin-bottom: 25px; border-left: 4px solid #0ea5e9;">
-          <p style="color: #0369a1; margin: 0; font-size: 14px;">
-            <strong>🔒 Security Tip:</strong> 
-            If you didn't request a password reset, someone else might be trying to access your account. 
-            We recommend you change your password immediately and review your account security.
-          </p>
-        </div>
-        
-        <p style="color: #666; font-size: 14px; margin-bottom: 30px;">
-          <strong>⏰ Expires in:</strong> This password reset link is only valid for <strong>1 hour</strong>.
-        </p>
-        
-        <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px;">
-          <p style="color: #999; font-size: 12px; text-align: center; margin: 0;">
-            If you didn't request a password reset, you can safely ignore this email.<br>
-            This is an automated message, please do not reply to this email.
-          </p>
-        </div>
-      </div>
-    `,
-  });
-};
 
 // Welcome email after verification
 export const sendWelcomeEmail = async (email: string, name: string): Promise<void> => {
@@ -567,3 +494,81 @@ export const testOrderEmail = async (toEmail: string = "ah770643@gmail.com"): Pr
     console.error('❌ Order confirmation test email failed:', error);
   }
 };
+// lib/email.ts - Add this function
+export async function sendPasswordResetEmail(data: {
+  email: string;
+  name: string;
+  resetUrl: string;
+}) {
+  try {
+    // For production, use an email service like Resend, SendGrid, etc.
+    const emailContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #f97316, #ea580c); padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .header h1 { color: white; margin: 0; font-size: 24px; }
+            .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+            .button { display: inline-block; background: #f97316; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; }
+            .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Epicurean Restaurant</h1>
+            </div>
+            <div class="content">
+              <h2>Reset Your Password</h2>
+              <p>Hello ${data.name},</p>
+              <p>You requested to reset your password. Click the button below to create a new password:</p>
+              <p style="text-align: center; margin: 30px 0;">
+                <a href="${data.resetUrl}" class="button">Reset Password</a>
+              </p>
+              <p>This link will expire in 1 hour for security reasons.</p>
+              <p>If you didn't request a password reset, please ignore this email.</p>
+              <div class="footer">
+                <p>© ${new Date().getFullYear()} Epicurean Restaurant. All rights reserved.</p>
+                <p>This is an automated message, please do not reply.</p>
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // For now, log the reset URL (in production, send actual email)
+    console.log('Password Reset URL:', data.resetUrl);
+    
+    // In production, uncomment and configure your email service:
+    /*
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Epicurean <noreply@epicurean.com>',
+        to: data.email,
+        subject: 'Reset Your Epicurean Password',
+        html: emailContent,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to send email');
+    }
+    */
+
+    return { success: true };
+    
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    throw error;
+  }
+}
